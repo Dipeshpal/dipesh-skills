@@ -1,0 +1,6 @@
+#!/bin/sh
+# Run by install.sh after this skill is copied.
+#   postinstall user|project   first-time interactive setup at that memory scope
+#   postinstall --refresh      after an update: upgrade dependencies using the saved choices, no questions
+if [ "$1" = "--refresh" ]; then exec "$(dirname "$0")/bc" setup --refresh; fi
+exec "$(dirname "$0")/bc" setup --scope "${1:-user}"

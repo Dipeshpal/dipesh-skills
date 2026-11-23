@@ -1,0 +1,4 @@
+# Third-party skills installed alongside this pack by install.sh.
+# Format: <skill-name> <github owner/repo> <path to skill folder inside repo ("." = repo root)>
+karpathy-guidelines multica-ai/andrej-karpathy-skills skills/karpathy-guidelines
+unslop              theclaymethod/unslop              .

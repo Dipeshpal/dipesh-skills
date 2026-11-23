@@ -1,0 +1,8 @@
+{
+  "name": "dipesh-task-planner-skill",
+  "version": "1.1.0",
+  "description": "Plan-first workflow for any non-trivial coding task: understand, recall the repo, ask, plan once, execute in parallel waves, verify, hand over.",
+  "author": { "name": "Dipesh Paul" },
+  "license": "MIT",
+  "keywords": ["workflow", "feature", "planning", "subagents", "sdlc"]
+}

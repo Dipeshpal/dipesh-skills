@@ -1,0 +1,4 @@
+#!/bin/sh
+# Unix wrapper; on Windows run: python bc.py <command>
+# Imports bc as a module (not `python3 bc.py`) so Python caches its bytecode: ~100 ms less per command.
+exec python3 -c 'import sys; sys.path.insert(0, sys.argv.pop(1)); import bc; bc.entry()' "$(dirname "$0")" "$@"

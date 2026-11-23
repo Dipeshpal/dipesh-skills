@@ -1,0 +1,57 @@
+{
+  "name": "dipesh-skills",
+  "owner": {
+    "name": "Dipesh Paul"
+  },
+  "metadata": {
+    "description": "General-purpose agent skills for software delivery.",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "dipesh-task-planner-skill",
+      "source": "./plugins/dipesh-task-planner-skill",
+      "description": "Understand \u2192 recall \u2192 ask \u2192 plan (one approval) \u2192 execute in parallel waves \u2192 verify \u2192 hand over. Works in any repo.",
+      "version": "1.1.0",
+      "category": "development",
+      "keywords": [
+        "workflow",
+        "feature",
+        "planning",
+        "subagents",
+        "sdlc"
+      ]
+    },
+    {
+      "name": "dipesh-browser-control",
+      "source": "./plugins/dipesh-browser-control",
+      "description": "Control your own browser profile (Chrome/Edge/Brave/Vivaldi/Opera/Chromium/Firefox) or a standalone one via Playwright; optional OpenJev/Jev step model; learns site recipes and mistakes. Run scripts/bc setup after install.",
+      "version": "1.1.0",
+      "category": "productivity",
+      "keywords": [
+        "browser",
+        "playwright",
+        "automation",
+        "openjev"
+      ]
+    },
+    {
+      "name": "andrej-karpathy-skills",
+      "source": {
+        "source": "github",
+        "repo": "multica-ai/andrej-karpathy-skills"
+      },
+      "description": "(Recommended, third-party) Karpathy-inspired guidelines to reduce common LLM coding mistakes.",
+      "category": "workflow"
+    },
+    {
+      "name": "ecc",
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/ECC"
+      },
+      "description": "(Recommended, third-party) ECC harness: agents, skills, hooks, rules and commands for Claude Code.",
+      "category": "workflow"
+    }
+  ]
+}

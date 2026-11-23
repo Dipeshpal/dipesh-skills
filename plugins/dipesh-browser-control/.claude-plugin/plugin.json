@@ -1,0 +1,8 @@
+{
+  "name": "dipesh-browser-control",
+  "version": "1.1.0",
+  "description": "Drive the user's own browser profile or a standalone browser via Playwright, with optional OpenJev/Jev step suggestions and a memory that learns from mistakes.",
+  "author": { "name": "Dipesh Paul" },
+  "license": "MIT",
+  "keywords": ["browser", "playwright", "automation", "openjev", "jev", "memory"]
+}
