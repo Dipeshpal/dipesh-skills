@@ -194,20 +194,18 @@ fi
 # Recommended Claude Code plugins (whole plugins, not skill folders): installed through the
 # claude CLI when Claude Code is a target. <plugin@marketplace> <marketplace github repo>
 rec_plugins=("ecc@ecc affaan-m/ECC")
+plugins_on() { [[ $recommended -eq 1 && $custom_dir -eq 0 && " ${agents[*]} " == *" claude "* ]]; }
 claude_plugins() {  # install | update
-  [[ $recommended -eq 1 && $custom_dir -eq 0 && " ${agents[*]} " == *" claude "* ]] || return 0
+  plugins_on || return 0
   local p id repo pscope=user
   [[ $scope == project ]] && pscope=project; [[ $local_scope -eq 1 ]] && pscope=local
   for p in "${rec_plugins[@]}"; do
     read -r id repo <<< "$p"
     wanted "${id%@*}" || continue
-    if [[ $1 == install && ( $interactive -eq 1 || $select -eq 1 ) ]]; then
-      menu_one "Also install the Claude Code plugin ${id%@*} ($repo: agents, skills, hooks, rules)?" "Yes" "No"
-      [[ $PICK -eq 0 ]] || continue
-    fi
     command -v claude >/dev/null || { echo "  -> Claude plugin ${id%@*}: run /plugin marketplace add $repo then /plugin install $id"; continue; }
     claude plugin marketplace add "$repo" >/dev/null 2>&1 || claude plugin marketplace update "${id#*@}" >/dev/null 2>&1 || true
     if [[ $1 == update ]]; then
+      claude plugin list 2>/dev/null | grep -q "$id" || continue
       claude plugin update "$id" >/dev/null 2>&1 && echo "updated     plugin $id" || echo "warning: could not update plugin $id" >&2
     else
       claude plugin install "$id" --scope "$pscope" >/dev/null 2>&1 && echo "installed plugin $id ($pscope scope)" || echo "warning: could not install plugin $id; run: claude plugin install $id" >&2
@@ -300,9 +298,13 @@ do_install() {
   local n c i ok=0 list=() labels=()
   [[ $own -eq 1 ]] && list+=("${own_names[@]}")
   [[ $recommended -eq 1 ]] && list+=("${rec_names[@]}")
+  local plugin_names=() p
+  if plugins_on; then for p in "${rec_plugins[@]}"; do p="${p%% *}"; plugin_names+=("${p%@*}"); done; fi
   if [[ $select -eq 1 ]]; then
+    list+=(${plugin_names[@]+"${plugin_names[@]}"})
     for n in "${list[@]}"; do
-      if i=$(index_of "$n" "${rec_names[@]}"); then labels+=("$(printf '%-28s %s' "$n" "${rec_repos[$i]}")")
+      if index_of "$n" ${plugin_names[@]+"${plugin_names[@]}"} >/dev/null; then labels+=("$(printf '%-28s %s' "$n" "$(for p in "${rec_plugins[@]}"; do [[ ${p%%@*} == "$n" ]] && echo "${p##* } (Claude Code plugin)"; done)")")
+      elif i=$(index_of "$n" "${rec_names[@]}"); then labels+=("$(printf '%-28s %s' "$n" "${rec_repos[$i]}")")
       else labels+=("$(printf '%-28s this pack' "$n")"); fi
     done
     menu_many "Which skills should be installed?" "${labels[@]}"
@@ -313,6 +315,7 @@ do_install() {
   for target in "${targets[@]}"; do
   for n in "${list[@]}"; do
     wanted "$n" || continue
+    index_of "$n" ${plugin_names[@]+"${plugin_names[@]}"} >/dev/null && continue
     c="$(install_one "$n" "$target")" || continue
     [[ $local_scope -eq 1 ]] && { git_exclude "$target" "$n" add; git_exclude "$target" "$LOCK" add; }
     echo "installed $n ($c) -> $target/$n"; ok=$((ok + 1))

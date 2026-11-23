@@ -107,15 +107,16 @@ try {
     function Wanted($n) { ($Skills.Count -eq 0) -or ($Skills -contains $n) }
     # Recommended Claude Code plugins (whole plugins, not skill folders), installed through the
     # claude CLI when Claude Code is a target. plugin@marketplace -> marketplace github repo
+    function PluginsOn { -not ($NoRecommended -or $Dir -or ($Agent -notcontains "claude")) }
     function ClaudePlugins($mode) {
-        if ($NoRecommended -or $Dir -or ($Agent -notcontains "claude")) { return }
+        if (-not (PluginsOn)) { return }
         foreach ($p in @(@("ecc@ecc", "affaan-m/ECC"))) {
             $id, $repo = $p; $name = $id.Split("@")[0]
             if (-not (Wanted $name)) { continue }
-            if ($mode -eq "install" -and $Interactive -and (Menu "Also install the Claude Code plugin $name (${repo}: agents, skills, hooks, rules)?" @("Yes", "No"))) { continue }
             if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Host "  -> Claude plugin ${name}: run /plugin marketplace add $repo then /plugin install $id"; continue }
             claude plugin marketplace add $repo *> $null
             if ($LASTEXITCODE -ne 0) { claude plugin marketplace update $id.Split("@")[1] *> $null }
+            if ($mode -eq "update" -and -not ((claude plugin list 2>$null) -match [regex]::Escape($id))) { continue }
             if ($mode -eq "update") { claude plugin update $id *> $null } else { claude plugin install $id --scope $Scope *> $null }
             if ($LASTEXITCODE -eq 0) { Write-Host "$($mode)ed plugin $id" } else { Write-Warning "could not $mode plugin $id; run: claude plugin $mode $id" }
         }
@@ -160,6 +161,7 @@ try {
         }
         "install" {
             $list = @(); if (-not $OnlyRecommended) { $list += $Own.Keys | Sort-Object }; if (-not $NoRecommended) { $list += $Rec.Keys }
+            $plugins = @(if (PluginsOn) { "ecc" }); $list += $plugins
             if ($Interactive) {
                 for ($i = 0; $i -lt $list.Count; $i++) { Write-Host ("  {0}. {1}" -f ($i + 1), $list[$i]) }
                 $r = Read-Host "Skills to install, numbers separated by spaces, or Enter for all"
@@ -168,7 +170,7 @@ try {
             $ok = 0; $setupOffered = @()
             foreach ($Target in $Targets) {
                 foreach ($n in $list) {
-                    if (-not (Wanted $n)) { continue }
+                    if (-not (Wanted $n) -or $plugins -contains $n) { continue }
                     $c = InstallOne $n $Target
                     if (-not $c) { continue }
                     Write-Host "installed $n ($c) -> $Target\$n"; $ok++
