@@ -1,5 +1,7 @@
 # dipesh-skills
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 General-purpose [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) for software delivery. Not tied to any project, language or framework.
 
 | Skill | What it does |
@@ -75,6 +77,7 @@ PowerShell takes the same choices as parameters: `-Action install|update|uninsta
 | `dipesh-browser-control` | ✅ | ✅ needs a shell on the machine | ❌ the sandbox has no local browser, profiles or display |
 | `karpathy-guidelines` | ✅ | ✅ | ✅ |
 | `unslop` | ✅ | ✅ | likely ✅: it bundles Python scripts, which the sandbox can run (untested) |
+| `ecc` (plugin) | ✅ | ECC's own installer | ❌ |
 
 Plugin installs update with `/plugin marketplace update dipesh-skills`.
 
@@ -90,7 +93,7 @@ Restart the session after installing.
 /dipesh-task-planner-skill add CSV export to the reports page
 ```
 
-or just describe the work — it triggers on new features, change requests, refactors, pasted tickets, "plan this task" / "break this down". Say "just plan it" to stop after the plan. Small tasks get a compressed version of the workflow; trivial ones skip it.
+or just describe the work in plain words — no ticket ID or formal spec needed. It triggers on new features, change requests, refactors, pasted tickets or user stories, "plan this task" / "break this down". Say "just plan it" to stop after the plan. Small tasks get a compressed version of the workflow; trivial ones skip it.
 
 ### Browser control setup
 
@@ -100,12 +103,20 @@ Installing `dipesh-browser-control` through `install.sh` offers to run its one-t
 ~/.claude/skills/dipesh-browser-control/scripts/bc setup      # or <project>/.claude/skills/...
 ```
 
-The setup asks which browser profile to use (or a standalone browser), which step model to use (none, Jev API key, OpenJev-1.7B ≈3.5 GB, OpenJev-4B ≈8.4 GB, Kev-0.6B browser-use ≈1.5 GB) and where lessons go. It then installs Playwright (plus PyTorch/OpenJev if chosen) into `~/.dipesh-browser-control/venv` and downloads the model. It needs `python3`; [`uv`](https://docs.astral.sh/uv/) is used when present, and OpenJev needs Python 3.11+, which uv provides.
+The setup asks which browser profile to use (or a standalone browser), which step model to use (none, Jev API key, OpenJev-1.7B ≈3.5 GB, OpenJev-4B ≈8.4 GB, Kev-0.6B browser-use ≈1.5 GB) and where lessons go. The browser you pick there becomes the machine default.
+
+**One browser per project, asked once.** The choice is remembered per project (git root of the working directory). In a project the agent has used before, `bc start` opens that project's browser without asking. In a new project it asks you once, saves the answer, and never asks there again. So a work repo can use your work Chrome profile and a side project your personal Brave profile on the same machine. Change it any time with `bc use N` (this project) or `bc use N --default` (new projects); `bc profiles` shows which is which.
+
+Setup then installs Playwright (plus PyTorch/OpenJev if chosen) into `~/.dipesh-browser-control/venv` and downloads the model. It needs `python3`; [`uv`](https://docs.astral.sh/uv/) is used when present, and OpenJev needs Python 3.11+, which uv provides.
 
 ## Make it yours
 
 The skill defers to the repo: it reads `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, rule files and CI config, and follows them over its own defaults. To specialise it for a team, put commands, branch names and hard rules in those files rather than editing the skill.
 
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). `main` is protected: every change goes through a reviewed pull request.
+
 ## License
 
-MIT
+[MIT](LICENSE)

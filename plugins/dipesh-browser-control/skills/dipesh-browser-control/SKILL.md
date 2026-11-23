@@ -35,11 +35,17 @@ automation uses the copy. That's deliberate. Chrome 136+ refuses automation on t
 profile folder, a running browser locks it, and the user's real browser stays untouched.
 Logins usually carry over. If the copy has gone stale (new logins), `bc stop && bc resync`.
 
-## 1. Pick the browser (ask the user once per task)
+## 1. Pick the browser (ask once per project, then never again)
 
-Before the first `bc start` of a task, ask the user which browser and profile to use, unless
-they already said so in this conversation, or a browser for this task is already running
-(`bc status` → `running_browser`):
+The choice is remembered **per project** (the git root of the working directory, else the
+directory itself), so one machine can use a work Chrome profile in one repo and a personal
+Brave profile in another without asking each time.
+
+Just run `bc start`:
+
+- **Project already has a browser** → it starts that one. Do not ask the user.
+- **New project** → it exits with `no browser chosen for this project yet`. Only then ask
+  the user, once:
 
 ```bash
 bc profiles
@@ -49,20 +55,25 @@ bc profiles
 #   4. Standalone Playwright Chromium (fresh profile, nothing from your browsers)
 ```
 
-Show the user that list as a question, with the default first and marked as recommended
-(use the agent's question UI if it has one, otherwise a short numbered list). Then:
+Show that list as a question, the default first and marked recommended (the agent's question
+UI if it has one, otherwise a short numbered list). Then:
 
 ```bash
-bc start --use 2              # this task only; numbers or text both work: --use "chrome work"
-bc start --use 2 --remember   # …and make it the new default
-bc start                      # the default, when the user just says "go ahead" / "default"
+bc start --use 2              # saved for this project; numbers or text: --use "chrome work"
+bc start --use default        # the machine default, saved for this project
+bc start --use 2 --remember   # …and also make it the default for new projects
+bc start --use 3 --once       # this run only, nothing saved
 ```
 
-Why ask: the profile decides which accounts the agent acts as (work vs personal), so it is
-the user's call. Pick a real profile when the task needs their logins; pick fresh or
-standalone for anything untrusted or when they don't want their accounts touched. The first
-use of a real profile copies it (a few seconds, with progress). Switching mid-task with
-`bc start --use N` stops the current browser and opens the new one.
+Ask again only when the user asks to switch (`bc use N` changes this project's browser,
+`bc use N --default` the machine default) or a task clearly needs other accounts than the
+saved profile has. `bc status` shows `project` and `project_browser`; `bc profiles` marks
+`this project`.
+
+Why ask at all: the profile decides which accounts the agent acts as (work vs personal), so
+it is the user's call. Pick a real profile when the task needs their logins; pick fresh or
+standalone for anything untrusted. The first use of a real profile copies it (a few seconds).
+Switching mid-task with `bc start --use N` stops the current browser and opens the new one.
 
 ## 2. Before acting: recall
 

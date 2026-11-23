@@ -7,8 +7,8 @@ needs Playwright re-executes itself inside the private venv at ~/.dipesh-browser
   bc setup [--scope user|project] [--yes]     detect browsers, choose profile + decision backend, install deps
   bc browsers                                  list detected browsers and profiles (JSON)
   bc profiles                                  numbered browsers/profiles (default marked) to offer the user
-  bc start [--use N|TEXT [--remember]]         run the browser (default, or the one chosen for this task)
-  bc use N|TEXT | resync [N|TEXT]              change the default / re-copy a real profile
+  bc start [--use N|TEXT [--remember]] [--once]  run this project's browser; --use picks (and saves) it
+  bc use N|TEXT [--default] | resync [N|TEXT]  change this project's browser (or the default) / re-copy a profile
   bc stop [--keep-model] | status              stop browser (+ model server) / show state
   bc open URL | back | reload                  navigate the active tab
   bc snapshot [--text N]                       page text + numbered interactive elements
@@ -338,6 +338,24 @@ def memory_dir(start=None):
     return HOME / "memory", "user"
 
 
+def project_key(start=None):
+    """The project a browser choice belongs to: the git root of cwd, else cwd itself."""
+    p = Path(start or os.getcwd()).resolve()
+    for d in (p, *p.parents):
+        if (d / ".git").exists() or (d / PROJECT_DIR).is_dir():
+            return str(d)
+    return str(p)
+
+
+def project_browser(cfg):
+    return (cfg.get("projects") or {}).get(project_key())
+
+
+def remember_project_browser(cfg, br):
+    cfg.setdefault("projects", {})[project_key()] = br
+    save_json(CONFIG, cfg)
+
+
 RULES_SEED = """# Browser-control rules (learned)
 
 General lessons that apply to every site. One line each, newest last. Keep it short: merge or
@@ -643,6 +661,8 @@ def cmd_setup(a):
         for f in files:
             link_instruction_file(f, shown_mem)
             print(f"linked {f}")
+    if not getattr(a, "refresh", False):  # the browser picked here is also this project's choice
+        cfg.setdefault("projects", {})[project_key()] = cfg["browser"]
     save_json(CONFIG, cfg)
     print(f"\ndone. config: {CONFIG}\nmemory ({scope}): {mem}\nTry: bc start && bc open https://example.com && bc snapshot")
 
@@ -674,6 +694,11 @@ def browser_choices():
 
 def match_choice(choices, spec):
     """A number from `bc profiles`, or any text that matches one label (e.g. 'brave', 'chrome dipesh')."""
+    if _norm(spec) == "default":
+        default = (load_json(CONFIG, {}) or {}).get("browser")
+        hit = [i for i, c in enumerate(choices) if same_browser(c, default)]
+        if hit:
+            return hit[0]
     if str(spec).isdigit() and 1 <= int(spec) <= len(choices):
         return int(spec) - 1
     words = _norm(spec).split()
@@ -698,15 +723,17 @@ def cmd_profiles(a):
     cfg = load_json(CONFIG, {})
     default = cfg.get("browser")
     running = (load_json(STATE, None) or {}).get("browser")
+    mine = project_browser(cfg)
     choices = browser_choices()
     if a.json:
-        print(json.dumps([{**c, "n": i + 1, "default": same_browser(c, default), "running": same_browser(c, running),
+        print(json.dumps([{**c, "n": i + 1, "default": same_browser(c, default), "this_project": same_browser(c, mine), "running": same_browser(c, running),
                            "copied": c.get("mode") == "profile" and Path(c["user_data_dir"]).exists()}
                           for i, c in enumerate(choices)], indent=2))
         return
     print("Browsers and profiles on this machine (bc start --use N):")
     for i, c in enumerate(choices):
-        tags = [t for t, on in (("default", same_browser(c, default)), ("running now", same_browser(c, running))) if on]
+        tags = [t for t, on in (("this project", same_browser(c, mine)), ("default", same_browser(c, default)),
+                                ("running now", same_browser(c, running))) if on]
         if c.get("mode") == "profile" and not Path(c["user_data_dir"]).exists():
             tags.append("first use copies it")
         print(f"  {i + 1}. {c['label']}" + (f"   ← {', '.join(tags)}" if tags else ""))
@@ -720,9 +747,13 @@ def cmd_use(a):
     if br.get("mode") == "profile" and not Path(br["user_data_dir"]).exists():
         print(f"copying {br['label']} …")
         clone_for(br)
-    cfg["browser"] = br
-    save_json(CONFIG, cfg)
-    print(f"default browser: {br['label']}")
+    if a.default:
+        cfg["browser"] = br
+        save_json(CONFIG, cfg)
+        print(f"default browser (new projects): {br['label']}")
+    else:
+        remember_project_browser(cfg, br)
+        print(f"browser for {project_key()}: {br['label']}")
 
 
 def cmd_resync(a):
@@ -1301,9 +1332,16 @@ def ensure_model(backend, wait=True, timeout=600):
 
 def cmd_start(a):
     cfg = load_json(CONFIG, None)
-    if cfg and a.use:
-        choices = browser_choices()
-        want = choices[match_choice(choices, a.use)]
+    saved = cfg and not a.use and project_browser(cfg)
+    if cfg and not a.use and not saved and not a.once:
+        die(f"no browser chosen for this project yet ({project_key()}). Ask the user once: show `bc profiles`, "
+            f"then `bc start --use N` (remembered for this project; `--use default` for the default)")
+    if cfg and (a.use or saved):
+        if a.use:
+            choices = browser_choices()
+            want = choices[match_choice(choices, a.use)]
+        else:
+            want = saved
         running = (load_json(STATE, None) or {}).get("browser")
         if running and not same_browser(running, want) and call("ping", quiet_fail=True):
             print(f"switching from {running.get('label')} to {want['label']} …")
@@ -1312,6 +1350,8 @@ def cmd_start(a):
         if want.get("mode") == "profile" and not Path(want["user_data_dir"]).exists():
             print(f"first use of {want['label']}: copying it (read-only) …")
             clone_for(want)
+        if a.use and not a.once:
+            remember_project_browser(cfg, want)
         if a.remember:
             cfg["browser"] = want
             save_json(CONFIG, cfg)
@@ -1342,7 +1382,7 @@ def cmd_start(a):
         time.sleep(0.5)
         if load_json(STATE, None) and call("ping", quiet_fail=True):
             print(f"browser running: {cfg['browser'].get('label', 'standalone')}"
-                  + ("" if a.use else "  (default; another one: bc profiles, then bc start --use N)"))
+                  + ("  (this project's browser; change: bc profiles, then bc start --use N)" if not a.once else ""))
             mem, scope = memory_dir()
             print(f"memory: {mem} ({scope}) — run `bc recall <site>` before acting")
             if backend != "agent":
@@ -1365,7 +1405,8 @@ def cmd_status(a):
     up = bool(call("ping", quiet_fail=True))
     running = (load_json(STATE, None) or {}).get("browser") or {}
     print(json.dumps({"running": up, "default_browser": cfg.get("browser", {}).get("label"),
-                      "running_browser": running.get("label") if up else None, "backend": cfg.get("backend"),
+                      "running_browser": running.get("label") if up else None,
+                      "project": project_key(), "project_browser": (project_browser(cfg) or {}).get("label"), "backend": cfg.get("backend"),
                       "openjev_server": ({"up": openjev_up(), **(our_model_pid() or {})}
                                        if is_local(str(cfg.get("backend", ""))) else None),
                       "memory": str(mem), "memory_scope": scope, "config": str(CONFIG)}, indent=2))
@@ -2013,10 +2054,13 @@ def main():
     s.add_argument("--refresh", action="store_true", help="upgrade dependencies with the saved choices (used by updates)")
     s = sp.add_parser("start")
     s.add_argument("--use", help="browser/profile for this task: a number from `bc profiles` or text like 'chrome dipesh'")
-    s.add_argument("--remember", action="store_true", help="with --use: also make it the default")
+    s.add_argument("--remember", action="store_true", help="with --use: also make it the default for new projects")
+    s.add_argument("--once", action="store_true", help="don't save the choice for this project (default if none given)")
     s.add_argument("--no-wait", action="store_true", help="don't wait for the model to finish loading")
     sp.add_parser("profiles").add_argument("--json", action="store_true")
-    sp.add_parser("use").add_argument("choice", help="number from `bc profiles` or matching text")
+    s = sp.add_parser("use")
+    s.add_argument("choice", help="number from `bc profiles` or matching text")
+    s.add_argument("--default", action="store_true", help="set the machine-wide default instead of this project's")
     sp.add_parser("resync").add_argument("choice", nargs="?", help="which profile (default: the default one)")
     s = sp.add_parser("stop")
     s.add_argument("--keep-model", action="store_true", help="leave the model server running for the next task")
