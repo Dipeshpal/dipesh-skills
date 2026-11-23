@@ -2,3 +2,5 @@
 # Format: <skill-name> <github owner/repo> <path to skill folder inside repo ("." = repo root)>
 karpathy-guidelines multica-ai/andrej-karpathy-skills skills/karpathy-guidelines
 unslop              theclaymethod/unslop              .
+brag                latent-spaces/brag                skills/brag
+brag-slim           latent-spaces/brag                skills/brag-slim

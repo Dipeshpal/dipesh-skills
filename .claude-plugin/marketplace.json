@@ -52,6 +52,15 @@
       },
       "description": "(Recommended, third-party) ECC harness: agents, skills, hooks, rules and commands for Claude Code.",
       "category": "workflow"
+    },
+    {
+      "name": "brag",
+      "source": {
+        "source": "github",
+        "repo": "latent-spaces/brag"
+      },
+      "description": "(Recommended, third-party) Turn the project you just built into a short, shareable launch video. Ships /brag and /brag-slim.",
+      "category": "productivity"
     }
   ]
 }

@@ -17,6 +17,7 @@ Installed by `install.sh` alongside the pack (skip with `--no-recommended`). Lis
 |---|---|
 | `karpathy-guidelines` | [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) |
 | `unslop` | [theclaymethod/unslop](https://github.com/theclaymethod/unslop) |
+| `brag`, `brag-slim` | [latent-spaces/brag](https://github.com/latent-spaces/brag) — turn the project you just built into a short launch video. `brag` (≈16 MB, bundled music) renders with [Hyperframes](https://github.com/heygen-com/hyperframes) and needs Node.js 22+, FFmpeg on `PATH` and `npx hyperframes`; `brag-slim` is one file and uses whatever tools the machine already has. |
 | `ecc` (Claude Code plugin: agents, skills, hooks, rules) | [affaan-m/ECC](https://github.com/affaan-m/ECC) — the scripts install it with `claude plugin install ecc@ecc` when Claude Code is a target (asked first in interactive mode; skipped with `--no-recommended` or `--dir`). Other agents: use ECC's own installer. |
 
 ## Install
@@ -28,6 +29,7 @@ Installed by `install.sh` alongside the pack (skip with `--no-recommended`). Lis
 /plugin install dipesh-task-planner-skill@dipesh-skills
 /plugin install andrej-karpathy-skills@dipesh-skills   # recommended
 /plugin install ecc@dipesh-skills                       # recommended (ECC harness)
+/plugin install brag@dipesh-skills                      # recommended (/brag + /brag-slim)
 ```
 
 `unslop` ships no Claude plugin manifest, so get it with the script below.
@@ -86,6 +88,7 @@ PowerShell takes the same choices as parameters: `-Action install|update|uninsta
 | `dipesh-browser-control` | ✅ | ✅ needs a shell on the machine | ❌ the sandbox has no local browser, profiles or display |
 | `karpathy-guidelines` | ✅ | ✅ | ✅ |
 | `unslop` | ✅ | ✅ | likely ✅: it bundles Python scripts, which the sandbox can run (untested) |
+| `brag` / `brag-slim` | ✅ | ✅ needs a shell (Node, FFmpeg) | ❌ needs local video tooling |
 | `ecc` (plugin) | ✅ | ECC's own installer | ❌ |
 
 Plugin installs update with `/plugin marketplace update dipesh-skills`.
