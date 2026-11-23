@@ -1,6 +1,6 @@
 ---
 name: dipesh-browser-control
-description: Control a real web browser from the terminal — the user's own Chrome / Edge / Brave / Vivaldi / Opera / Chromium / Firefox profile (logged-in sessions) or a clean standalone browser — via Playwright, with an optional local OpenJev or hosted Jev model suggesting each step, and a memory that learns site recipes and past mistakes. Use whenever a task needs a browser: open or read a web page that needs login or JavaScript, fill or submit a form, click through a web app, check a dashboard, download something, test a local web app in a real browser, scrape a page the user can see, or "do X on <website> for me" — even if the user doesn't say "browser". Also use when the user asks to set up, reconfigure or troubleshoot browser control.
+description: "Control a real web browser from the terminal — the user's own Chrome / Edge / Brave / Vivaldi / Opera / Chromium / Firefox profile (logged-in sessions) or a clean standalone browser — via Playwright, with an optional local OpenJev or hosted Jev model suggesting each step, and a memory that learns site recipes and past mistakes. Use whenever a task needs a browser: open or read a web page that needs login or JavaScript, fill or submit a form, click through a web app, check a dashboard, download something, test a local web app in a real browser, scrape a page the user can see, or \"do X on <website> for me\" — even if the user doesn't say \"browser\". Also use when the user asks to set up, reconfigure or troubleshoot browser control."
 ---
 
 # Dipesh Browser Control

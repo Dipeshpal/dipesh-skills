@@ -32,6 +32,15 @@ Installed by `install.sh` alongside the pack (skip with `--no-recommended`). Lis
 
 `unslop` ships no Claude plugin manifest, so get it with the script below.
 
+### skills.sh (`npx skills`)
+
+```bash
+npx skills add Dipeshpal/dipesh-skills                                   # pick skills and agents interactively
+npx skills add Dipeshpal/dipesh-skills --skill dipesh-task-planner-skill # one skill
+```
+
+Installs this pack's own skills only; use the script below for the recommended third-party ones and the ECC plugin.
+
 ### Script (Claude Code, Codex, any agent that reads `SKILL.md` folders)
 
 ```bash
